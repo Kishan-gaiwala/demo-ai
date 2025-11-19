@@ -1123,7 +1123,7 @@ const RingTryOn = () => {
   const [isRearCamera, setIsRearCamera] = useState(true)
   const [ringLoaded, setRingLoaded] = useState(false)
   const [ringParams, setRingParams] = useState({
-    offsetX: 0,
+    offsetX: 3,
     offsetY: -10,
     rotation: 90,
   })
