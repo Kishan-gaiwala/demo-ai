@@ -1527,115 +1527,108 @@
 
 // export default RingTryOn;
 
-
-
-import { useEffect, useRef, useState } from "react";
-import { Hands } from "@mediapipe/hands";
-import { Camera } from "@mediapipe/camera_utils";
-import ringImg from "./assets/eing2.png";
+import { useEffect, useRef, useState } from 'react'
+import { Hands } from '@mediapipe/hands'
+import { Camera } from '@mediapipe/camera_utils'
+import ringImg from './assets/eing2.png'
 
 const FINGER_MAP = {
   index: { base: 5, mid: 6 },
   middle: { base: 9, mid: 10 },
   ring: { base: 13, mid: 14 },
   pinky: { base: 17, mid: 18 },
-};
+}
 
 // AUTO FINGER CONFIG (angle flip, angle/tilt, scale)
 const FINGER_CONFIG = {
-  index: { angleFlip: -2, zTilt: 0.75, yTilt: -20, size: 0.70 }, // index needs flip
-  middle: { angleFlip: 1, zTilt: 0.80, yTilt: -10, size: 0.75 },
+  index: { angleFlip: -1, zTilt: 0.75, yTilt: -20, size: 0.7 }, // index needs flip
+  middle: { angleFlip: 1, zTilt: 0.8, yTilt: -10, size: 0.75 },
   ring: { angleFlip: 1, zTilt: 0.85, yTilt: -5, size: 0.78 },
-  pinky: { angleFlip: 1, zTilt: 0.70, yTilt: -25, size: 0.68 },
-};
+  pinky: { angleFlip: 1, zTilt: 0.7, yTilt: -25, size: 0.68 },
+}
 
 const RingTryOn = () => {
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const cameraRef = useRef(null);
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const cameraRef = useRef(null)
 
-  const ringImage = useRef(new Image());
-  const [ringLoaded, setRingLoaded] = useState(false);
+  const ringImage = useRef(new Image())
+  const [ringLoaded, setRingLoaded] = useState(false)
 
-  const [selectedFinger, setSelectedFinger] = useState("ring");
-  const [capturedImages, setCapturedImages] = useState([]);
-  const [cameraStopped, setCameraStopped] = useState(false);
+  const [selectedFinger, setSelectedFinger] = useState('ring')
+  const [capturedImages, setCapturedImages] = useState([])
+  const [cameraStopped, setCameraStopped] = useState(false)
 
   // smoothing
-  const smoothFingerWidth = useRef(0);
-  const prevAngle = useRef(0);
-  const prevCenter = useRef({ x: 0, y: 0 });
-  const stableCounter = useRef(0);
+  const smoothFingerWidth = useRef(0)
+  const prevAngle = useRef(0)
+  const prevCenter = useRef({ x: 0, y: 0 })
+  const stableCounter = useRef(0)
 
   useEffect(() => {
-    ringImage.current.src = ringImg;
-    ringImage.current.onload = () => setRingLoaded(true);
-  }, []);
+    ringImage.current.src = ringImg
+    ringImage.current.onload = () => setRingLoaded(true)
+  }, [])
 
   useEffect(() => {
-    if (cameraStopped) return;
+    if (cameraStopped) return
 
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
 
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-    });
+    })
 
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
       minDetectionConfidence: 0.7,
       minTrackingConfidence: 0.7,
-    });
+    })
 
     hands.onResults((results) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
 
-      const lm = results.multiHandLandmarks?.[0];
-      if (!lm) return;
+      const lm = results.multiHandLandmarks?.[0]
+      if (!lm) return
 
-      const { base, mid } = FINGER_MAP[selectedFinger];
-      const basePt = lm[base];
-      const midPt = lm[mid];
+      const { base, mid } = FINGER_MAP[selectedFinger]
+      const basePt = lm[base]
+      const midPt = lm[mid]
 
       // finger center
-      const centerX = ((basePt.x + midPt.x) / 2) * canvas.width;
-      const centerY = ((basePt.y + midPt.y) / 2) * canvas.height;
+      const centerX = ((basePt.x + midPt.x) / 2) * canvas.width
+      const centerY = ((basePt.y + midPt.y) / 2) * canvas.height
 
       // finger width
-      const dist = Math.hypot(
-        (basePt.x - midPt.x) * canvas.width,
-        (basePt.y - midPt.y) * canvas.height
-      );
+      const dist = Math.hypot((basePt.x - midPt.x) * canvas.width, (basePt.y - midPt.y) * canvas.height)
 
-      smoothFingerWidth.current =
-        smoothFingerWidth.current * 0.8 + dist * 0.2;
+      smoothFingerWidth.current = smoothFingerWidth.current * 0.8 + dist * 0.2
 
       // base angle along finger (base -> mid)
-      let angle = Math.atan2(midPt.y - basePt.y, midPt.x - basePt.x);
+      let angle = Math.atan2(midPt.y - basePt.y, midPt.x - basePt.x)
 
       // rotate ring perpendicular to finger
-      angle += Math.PI / 2;
+      angle += Math.PI / 2
 
       // apply per-finger flip if needed (index often needs flipping)
-      const cfg = FINGER_CONFIG[selectedFinger] || { angleFlip: 1, zTilt: 0.8, yTilt: 0, size: 0.75 };
-      angle *= cfg.angleFlip;
+      const cfg = FINGER_CONFIG[selectedFinger] || { angleFlip: 1, zTilt: 0.8, yTilt: 0, size: 0.75 }
+      angle *= cfg.angleFlip
 
       // smooth the angle
-      const smoothA = prevAngle.current * 0.85 + angle * 0.15;
-      prevAngle.current = smoothA;
+      const smoothA = prevAngle.current * 0.85 + angle * 0.15
+      prevAngle.current = smoothA
 
-      const ringWidth = smoothFingerWidth.current * cfg.size;
-      const ringHeight =
-        ringWidth * (ringImage.current.height / ringImage.current.width);
+      const ringWidth = smoothFingerWidth.current * cfg.size
+      const ringHeight = ringWidth * (ringImage.current.height / ringImage.current.width)
 
       // DRAW RING WITH 3D TILT
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(smoothA);
+      ctx.save()
+      ctx.translate(centerX, centerY)
+      ctx.rotate(smoothA)
 
       // z-axis depth (skew to simulate depth)
       ctx.transform(
@@ -1644,138 +1637,101 @@ const RingTryOn = () => {
         cfg.zTilt * 0.15, // skew to simulate depth (Z-tilt)
         1,
         0,
-        0
-      );
+        0,
+      )
 
       // simulate a slight Y rotation by rotating a bit after skew
-      ctx.rotate((cfg.yTilt * Math.PI) / 180);
+      ctx.rotate((cfg.yTilt * Math.PI) / 180)
 
       if (ringLoaded) {
-        ctx.drawImage(
-          ringImage.current,
-          -ringWidth / 2,
-          -ringHeight / 2,
-          ringWidth,
-          ringHeight
-        );
+        ctx.drawImage(ringImage.current, -ringWidth / 2, -ringHeight / 2, ringWidth, ringHeight)
       }
 
-      ctx.restore();
+      ctx.restore()
 
       // stability detection
-      const dx = centerX - prevCenter.current.x;
-      const dy = centerY - prevCenter.current.y;
-      const move = Math.hypot(dx, dy);
+      const dx = centerX - prevCenter.current.x
+      const dy = centerY - prevCenter.current.y
+      const move = Math.hypot(dx, dy)
 
-      if (move < 3) stableCounter.current++;
-      else stableCounter.current = 0;
+      if (move < 3) stableCounter.current++
+      else stableCounter.current = 0
 
-      prevCenter.current = { x: centerX, y: centerY };
+      prevCenter.current = { x: centerX, y: centerY }
 
       if (stableCounter.current > 30) {
-        stableCounter.current = 0;
-        captureImages();
+        stableCounter.current = 0
+        captureImages()
       }
-    });
+    })
 
     const cam = new Camera(video, {
       onFrame: async () => {
-        await hands.send({ image: video });
+        await hands.send({ image: video })
       },
       width: 500,
       height: 500,
-    });
+      facingMode: 'environment',
+    })
 
-    cam.start();
-    cameraRef.current = cam;
+    cam.start()
+    cameraRef.current = cam
 
-    return () => cam.stop();
-  }, [selectedFinger, ringLoaded, cameraStopped]);
+    return () => cam.stop()
+  }, [selectedFinger, ringLoaded, cameraStopped])
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    canvas.width = 500;
-    canvas.height = 500;
-  }, []);
+    const canvas = canvasRef.current
+    canvas.width = 500
+    canvas.height = 500
+  }, [])
 
   const captureImages = async () => {
-    const canvas = canvasRef.current;
-    const imgs = [];
+    const canvas = canvasRef.current
+    const imgs = []
 
     for (let i = 0; i < 2; i++) {
-      imgs.push(canvas.toDataURL("image/png"));
-      await new Promise((res) => setTimeout(res, 500));
+      imgs.push(canvas.toDataURL('image/png'))
+      await new Promise((res) => setTimeout(res, 5000))
     }
 
-    setCapturedImages(imgs);
-    setCameraStopped(true);
-    cameraRef.current?.stop();
-  };
+    setCapturedImages(imgs)
+    setCameraStopped(true)
+    cameraRef.current?.stop()
+  }
 
   const reset = () => {
-    setCapturedImages([]);
-    setCameraStopped(false);
-  };
+    setCapturedImages([])
+    setCameraStopped(false)
+  }
 
   return (
-    <div className="flex flex-col items-center p-4 gap-4">
-      <div className="relative w-[500px] h-[500px] border rounded-xl overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <div className='flex flex-col items-center p-4 gap-4'>
+      <div className='relative w-[500px] h-[500px] border rounded-xl overflow-hidden'>
+        <video ref={videoRef} autoPlay playsInline muted className='absolute inset-0 w-full h-full object-cover' />
+        <canvas ref={canvasRef} className='absolute inset-0 w-full h-full' />
       </div>
 
       {!cameraStopped && (
-        <select
-          value={selectedFinger}
-          onChange={(e) => setSelectedFinger(e.target.value)}
-          className="p-2 border rounded-lg"
-        >
-          <option value="index">Index Finger</option>
-          <option value="middle">Middle Finger</option>
-          <option value="ring">Ring Finger</option>
-          <option value="pinky">Pinky Finger</option>
+        <select value={selectedFinger} onChange={(e) => setSelectedFinger(e.target.value)} className='p-2 border rounded-lg'>
+          <option value='index'>Index Finger</option>
+          <option value='middle'>Middle Finger</option>
+          <option value='ring'>Ring Finger</option>
+          <option value='pinky'>Pinky Finger</option>
         </select>
       )}
 
       {capturedImages.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">📸 Captured Photos:</h3>
-          <img
-            src={capturedImages[0]}
-            className="w-64 rounded-lg shadow-lg"
-            alt="capture"
-          />
-          <button
-            onClick={reset}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg"
-          >
+        <div className='mt-4'>
+          <h3 className='text-lg font-semibold mb-2'>📸 Captured Photos:</h3>
+          <img src={capturedImages[0]} className='w-64 rounded-lg shadow-lg' alt='capture' />
+          <button onClick={reset} className='mt-4 px-4 py-2 bg-green-600 text-white rounded-lg'>
             Restart Camera
           </button>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default RingTryOn;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default RingTryOn
