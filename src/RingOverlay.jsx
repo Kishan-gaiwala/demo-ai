@@ -2556,6 +2556,7 @@
 // export default RingTryOn
 
 import { useEffect, useRef, useState } from 'react'
+import staticRing from './assets/eing2.png'
 
 const FINGER_MAP = {
   index: { base: 5, mid: 6, tip: 8 },
@@ -2598,7 +2599,17 @@ const RingTryOn = () => {
   })
 
   // State for custom ring image
-  const [ringImageUrl, setRingImageUrl] = useState(null)
+  // const selectedRing = staticRing;
+
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = staticRing;
+    img.onload = () => {
+      imageRef.current = img;
+    };
+  }, []);// always use static image
+
 
   // Create default realistic ring image
   useEffect(() => {
@@ -2640,64 +2651,8 @@ const RingTryOn = () => {
   }, [])
 
   // Load custom ring image when provided
-  useEffect(() => {
-    if (ringImageUrl) {
-      setRingLoaded(false)
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
 
-      // ⭐ HIGH QUALITY IMAGE SETTINGS
-      img.decoding = "sync"
-      img.loading = "eager"
-      img.fetchPriority = "high"
 
-      img.onload = () => {
-        // ⭐ force high quality scaling
-        const highResCanvas = document.createElement("canvas")
-        const ctx = highResCanvas.getContext("2d")
-
-        // upscale to very high internal resolution
-        highResCanvas.width = img.width * 2
-        highResCanvas.height = img.height * 2
-
-        // high-quality resampling
-        ctx.imageSmoothingEnabled = true
-        ctx.imageSmoothingQuality = "high"
-
-        ctx.drawImage(img, 0, 0, highResCanvas.width, highResCanvas.height)
-
-        const highResImg = new Image()
-        highResImg.src = highResCanvas.toDataURL("image/png")
-
-        highResImg.onload = () => {
-          imageRef.current = highResImg
-          setRingLoaded(true)
-          if (cameraStopped) redrawRing()
-        }
-      }
-
-      img.onerror = () => {
-        alert('Failed to load ring image. Please try another image.')
-        setRingLoaded(true)
-      }
-      img.src = ringImageUrl
-    }
-  }, [ringImageUrl])
-
-  const handleRingImageUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          setRingImageUrl(event.target.result)
-        }
-        reader.readAsDataURL(file)
-      } else {
-        alert('Please upload a valid image file')
-      }
-    }
-  }
 
   // Load MediaPipe Hands
   useEffect(() => {
@@ -3194,7 +3149,7 @@ const RingTryOn = () => {
         <p className='text-slate-600'>Try rings on different fingers with realistic visualization</p>
       </div>
 
-      <div className='relative w-full aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-slate-200'>
+      <div className='relative w-full w-[500px] h-[500px] aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-slate-200'>
         <video ref={videoRef} className="hidden" style={{
           display: "none"
         }} />
@@ -3209,7 +3164,7 @@ const RingTryOn = () => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none', height: "100%", width: "100%", objectFit: "contain" }}
+          style={{ touchAction: 'none', height: "100%", objectFit: "contain" }}
         />
 
         {/* <canvas
@@ -3221,15 +3176,7 @@ const RingTryOn = () => {
       <div className='flex flex-wrap gap-3 justify-center'>
         {!cameraStopped && (
           <>
-            <label className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105 cursor-pointer'>
-              💍 Upload Ring Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleRingImageUpload}
-                className='hidden'
-              />
-            </label>
+
             <button
               onClick={capturePhoto}
               className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105'
@@ -3241,15 +3188,7 @@ const RingTryOn = () => {
 
         {cameraStopped && (
           <>
-            <label className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105 cursor-pointer'>
-              💍 Change Ring
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleRingImageUpload}
-                className='hidden'
-              />
-            </label>
+
             <div className='bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold'>
               Current: <span className='capitalize'>{selectedFinger}</span> Finger
             </div>
@@ -3279,13 +3218,7 @@ const RingTryOn = () => {
         </div>
       )}
 
-      {ringImageUrl && (
-        <div className='bg-green-50 border-2 border-green-200 rounded-xl p-4 max-w-md text-center'>
-          <p className='text-green-800 font-medium'>
-            ✅ Custom ring image loaded successfully!
-          </p>
-        </div>
-      )}
+
     </div>
   )
 }
