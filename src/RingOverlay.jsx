@@ -3176,7 +3176,7 @@ const RingTryOn = () => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none', height: 600, width: "100%", objectFit: "contain" }}
+          style={{ touchAction: 'none', height: 500, width: "100%" }}
         />
 
         {/* <canvas
