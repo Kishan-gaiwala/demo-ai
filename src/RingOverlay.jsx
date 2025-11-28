@@ -1740,6 +1740,7 @@
 
 // export default RingTryOn
 
+// drag and drop ring horizontally
 import { useEffect, useRef, useState } from 'react'
 import { Hands } from '@mediapipe/hands'
 import { Camera } from '@mediapipe/camera_utils'
@@ -2127,3 +2128,429 @@ const RingTryOn = () => {
 }
 
 export default RingTryOn
+
+// drag and drop ring vertically
+// import { useEffect, useRef, useState } from 'react'
+// import { Hands } from '@mediapipe/hands'
+// import { Camera } from '@mediapipe/camera_utils'
+// import ringImg from './assets/eing2.png'
+
+// const FINGER_MAP = {
+//   index: { base: 6, mid: 8 },
+//   middle: { base: 10, mid: 12 },
+//   ring: { base: 14, mid: 16 },
+// }
+
+// const RingTryOn = () => {
+//   const videoRef = useRef(null)
+//   const canvasRef = useRef(null)
+//   const cameraRef = useRef(null)
+//   const handsRef = useRef(null)
+
+//   const imageRef = useRef(new Image())
+//   const selectedFingerRef = useRef('ring')
+//   const lastLandmarks = useRef(null)
+
+//   const [selectedFinger, setSelectedFinger] = useState('ring')
+//   const [capturedImage, setCapturedImage] = useState(null)
+//   const [ringLoaded, setRingLoaded] = useState(false)
+//   const [cameraStopped, setCameraStopped] = useState(false)
+//   const [isDragging, setIsDragging] = useState(false)
+//   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+//   const [ringPosition, setRingPosition] = useState({
+//     index: 0.25,
+//     middle: 0.28,
+//     ring: 0.28,
+//   })
+
+//   const smoothAngle = useRef(0)
+
+//   useEffect(() => {
+//     // Use a placeholder ring if image fails to load
+//     imageRef.current.src = ringImg
+//     imageRef.current.onload = () => {
+//       console.log('Ring image loaded successfully')
+//       setRingLoaded(true)
+//     }
+//     imageRef.current.onerror = () => {
+//       console.error('Failed to load ring image, using fallback')
+//       // Create a simple colored ring as fallback
+//       const canvas = document.createElement('canvas')
+//       canvas.width = 200
+//       canvas.height = 200
+//       const ctx = canvas.getContext('2d')
+
+//       // Draw gold ring
+//       ctx.fillStyle = '#FFD700'
+//       ctx.beginPath()
+//       ctx.arc(100, 100, 80, 0, Math.PI * 2)
+//       ctx.fill()
+//       ctx.fillStyle = '#000'
+//       ctx.beginPath()
+//       ctx.arc(100, 100, 60, 0, Math.PI * 2)
+//       ctx.fill()
+
+//       imageRef.current.src = canvas.toDataURL()
+//       setRingLoaded(true)
+//     }
+//   }, [])
+
+//   useEffect(() => {
+//     selectedFingerRef.current = selectedFinger
+//     if (cameraStopped) redrawRing()
+//   }, [selectedFinger])
+
+//   useEffect(() => {
+//     const video = videoRef.current
+//     const canvas = canvasRef.current
+//     const ctx = canvas.getContext('2d')
+
+//     handsRef.current = new Hands({
+//       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+//     })
+
+//     handsRef.current.setOptions({
+//       maxNumHands: 1,
+//       modelComplexity: 1,
+//       minDetectionConfidence: 0.7,
+//       minTrackingConfidence: 0.7,
+//     })
+
+//     handsRef.current.onResults((results) => {
+//       ctx.clearRect(0, 0, canvas.width, canvas.height)
+//       ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height)
+
+//       const lm = results.multiHandLandmarks?.[0]
+//       if (!lm) return
+
+//       lastLandmarks.current = lm
+
+//       // Draw ring in real-time
+//       if (!cameraStopped && ringLoaded) {
+//         drawRing(lm)
+//       }
+//     })
+
+//     const cam = new Camera(video, {
+//       onFrame: async () => {
+//         await handsRef.current.send({ image: video })
+//       },
+//       width: 500,
+//       height: 500,
+//       facingMode: 'environment',
+//     })
+
+//     cam.start()
+//     cameraRef.current = cam
+//     return () => cam.stop()
+//   }, [])
+
+//   useEffect(() => {
+//     canvasRef.current.width = 500
+//     canvasRef.current.height = 500
+//   }, [])
+
+//   const capturePhoto = () => {
+//     if (!lastLandmarks.current) {
+//       console.error('No hand detected')
+//       return
+//     }
+
+//     const canvas = canvasRef.current
+//     const ctx = canvas.getContext('2d')
+
+//     // Capture current frame
+//     const img = canvas.toDataURL('image/png')
+//     setCapturedImage(img)
+//     setCameraStopped(true)
+//     cameraRef.current?.stop()
+
+//     // Immediately redraw with ring
+//     setTimeout(() => {
+//       const imgElement = new Image()
+//       imgElement.src = img
+//       imgElement.onload = () => {
+//         ctx.clearRect(0, 0, canvas.width, canvas.height)
+//         ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height)
+//         if (lastLandmarks.current && ringLoaded) {
+//           drawRing(lastLandmarks.current)
+//         }
+//       }
+//     }, 100)
+//   }
+
+//   const redrawRing = (force = false) => {
+//     if (!cameraStopped && !force) return
+//     if (!lastLandmarks.current || !ringLoaded) return
+
+//     const lm = lastLandmarks.current
+//     const ctx = canvasRef.current.getContext('2d')
+//     const canvas = canvasRef.current
+
+//     if (capturedImage) {
+//       const img = new Image()
+//       img.src = capturedImage
+
+//       img.onload = () => {
+//         ctx.clearRect(0, 0, canvas.width, canvas.height)
+//         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+//         drawRing(lm)
+//       }
+//     } else {
+//       // If no captured image yet, just draw the ring
+//       drawRing(lm)
+//     }
+//   }
+
+//   const drawRing = (lm) => {
+//     const finger = selectedFingerRef.current
+//     const ctx = canvasRef.current.getContext('2d')
+//     const { base, mid } = FINGER_MAP[finger]
+
+//     const basePt = lm[base]
+//     const midPt = lm[mid]
+
+//     const t = ringPosition[finger]
+
+//     const x = (basePt.x + (midPt.x - basePt.x) * t) * canvasRef.current.width
+//     const y = (basePt.y + (midPt.y - basePt.y) * t) * canvasRef.current.height
+
+//     const width = Math.hypot((basePt.x - midPt.x) * canvasRef.current.width, (basePt.y - midPt.y) * canvasRef.current.height)
+
+//     let angle = Math.atan2(midPt.y - basePt.y, midPt.x - basePt.x) + Math.PI / 2
+
+//     if (finger === 'index') {
+//       angle -= 0.13
+//     }
+
+//     smoothAngle.current = smoothAngle.current * 0.75 + angle * 0.25
+
+//     if (!ringLoaded) return
+
+//     const SIZE_MAP = {
+//       index: 0.55,
+//       middle: 0.55,
+//       ring: 0.55,
+//     }
+
+//     const ringW = width * SIZE_MAP[finger]
+//     const ringH = ringW * (imageRef.current.height / imageRef.current.width)
+
+//     ctx.save()
+//     ctx.translate(x, y)
+//     ctx.rotate(smoothAngle.current)
+//     ctx.drawImage(imageRef.current, -ringW / 2, -ringH / 2, ringW, ringH)
+//     ctx.restore()
+//   }
+
+//   const getRingPosition = (finger, lm) => {
+//     const { base, mid } = FINGER_MAP[finger]
+//     const basePt = lm[base]
+//     const midPt = lm[mid]
+
+//     const t = ringPosition[finger]
+//     const x = (basePt.x + (midPt.x - basePt.x) * t) * canvasRef.current.width
+//     const y = (basePt.y + (midPt.y - basePt.y) * t) * canvasRef.current.height
+
+//     return { x, y }
+//   }
+
+//   const findClosestFinger = (mouseX, mouseY) => {
+//     if (!lastLandmarks.current) return null
+
+//     const lm = lastLandmarks.current
+//     let minDist = Infinity
+//     let closestFinger = null
+
+//     Object.keys(FINGER_MAP).forEach((finger) => {
+//       const pos = getRingPosition(finger, lm)
+//       const dist = Math.hypot(mouseX - pos.x, mouseY - pos.y)
+
+//       if (dist < minDist) {
+//         minDist = dist
+//         closestFinger = finger
+//       }
+//     })
+
+//     return minDist < 80 ? closestFinger : null
+//   }
+
+//   const adjustRingPositionOnFinger = (mouseX, mouseY) => {
+//     if (!lastLandmarks.current) return
+
+//     const finger = selectedFingerRef.current
+//     const lm = lastLandmarks.current
+//     const { base, mid } = FINGER_MAP[finger]
+
+//     const basePt = lm[base]
+//     const midPt = lm[mid]
+
+//     // Calculate finger line
+//     const fingerX1 = basePt.x * canvasRef.current.width
+//     const fingerY1 = basePt.y * canvasRef.current.height
+//     const fingerX2 = midPt.x * canvasRef.current.width
+//     const fingerY2 = midPt.y * canvasRef.current.height
+
+//     // Project mouse position onto finger line
+//     const fingerDx = fingerX2 - fingerX1
+//     const fingerDy = fingerY2 - fingerY1
+//     const fingerLength = Math.hypot(fingerDx, fingerDy)
+
+//     const mouseDx = mouseX - fingerX1
+//     const mouseDy = mouseY - fingerY1
+
+//     // Calculate projection (t parameter)
+//     let t = (mouseDx * fingerDx + mouseDy * fingerDy) / (fingerLength * fingerLength)
+
+//     // Clamp between 0.1 (base) and 0.7 (near tip)
+//     t = Math.max(-0.4, Math.min(0.8, t))
+
+//     setRingPosition((prev) => ({
+//       ...prev,
+//       [finger]: t,
+//     }))
+
+//     redrawRing(true)
+//   }
+
+//   const handleMouseDown = (e) => {
+//     if (!cameraStopped || !lastLandmarks.current) return
+
+//     const rect = canvasRef.current.getBoundingClientRect()
+//     const mouseX = e.clientX - rect.left
+//     const mouseY = e.clientY - rect.top
+
+//     const currentPos = getRingPosition(selectedFingerRef.current, lastLandmarks.current)
+//     const dist = Math.hypot(mouseX - currentPos.x, mouseY - currentPos.y)
+
+//     if (dist < 50) {
+//       setIsDragging(true)
+//       setDragStart({ x: mouseX, y: mouseY })
+//       canvasRef.current.style.cursor = 'grabbing'
+//     }
+//   }
+
+//   const handleMouseMove = (e) => {
+//     if (!cameraStopped || !lastLandmarks.current) return
+
+//     const rect = canvasRef.current.getBoundingClientRect()
+//     const mouseX = e.clientX - rect.left
+//     const mouseY = e.clientY - rect.top
+
+//     if (isDragging) {
+//       // Check if dragging to another finger
+//       const closestFinger = findClosestFinger(mouseX, mouseY)
+//       if (closestFinger && closestFinger !== selectedFingerRef.current) {
+//         setSelectedFinger(closestFinger)
+//       } else {
+//         // Drag along current finger
+//         adjustRingPositionOnFinger(mouseX, mouseY)
+//       }
+//     } else {
+//       const currentPos = getRingPosition(selectedFingerRef.current, lastLandmarks.current)
+//       const dist = Math.hypot(mouseX - currentPos.x, mouseY - currentPos.y)
+//       canvasRef.current.style.cursor = dist < 50 ? 'grab' : 'default'
+//     }
+//   }
+
+//   const handleMouseUp = () => {
+//     setIsDragging(false)
+//     canvasRef.current.style.cursor = 'default'
+//   }
+
+//   const handleTouchStart = (e) => {
+//     if (!cameraStopped || !lastLandmarks.current) return
+//     e.preventDefault()
+
+//     const rect = canvasRef.current.getBoundingClientRect()
+//     const touch = e.touches[0]
+//     const touchX = touch.clientX - rect.left
+//     const touchY = touch.clientY - rect.top
+
+//     const currentPos = getRingPosition(selectedFingerRef.current, lastLandmarks.current)
+//     const dist = Math.hypot(touchX - currentPos.x, touchY - currentPos.y)
+
+//     if (dist < 50) {
+//       setIsDragging(true)
+//       setDragStart({ x: touchX, y: touchY })
+//     }
+//   }
+
+//   const handleTouchMove = (e) => {
+//     if (!isDragging || !lastLandmarks.current) return
+//     e.preventDefault()
+
+//     const rect = canvasRef.current.getBoundingClientRect()
+//     const touch = e.touches[0]
+//     const touchX = touch.clientX - rect.left
+//     const touchY = touch.clientY - rect.top
+
+//     const closestFinger = findClosestFinger(touchX, touchY)
+//     if (closestFinger && closestFinger !== selectedFingerRef.current) {
+//       setSelectedFinger(closestFinger)
+//     } else {
+//       adjustRingPositionOnFinger(touchX, touchY)
+//     }
+//   }
+
+//   const handleTouchEnd = () => {
+//     setIsDragging(false)
+//   }
+
+//   const reset = () => {
+//     setCapturedImage(null)
+//     setCameraStopped(false)
+//     setIsDragging(false)
+//     cameraRef.current?.start()
+//   }
+
+//   return (
+//     <div className='flex flex-col items-center gap-3 p-4'>
+//       <div className='relative w-[500px] h-[500px] border rounded-xl'>
+//         <video
+//           ref={videoRef}
+//           autoPlay
+//           muted
+//           playsInline
+//           className='hidden'
+//           style={{
+//             display: 'none',
+//           }}
+//         />
+//         <canvas
+//           ref={canvasRef}
+//           className='w-full h-full'
+//           onMouseDown={handleMouseDown}
+//           onMouseMove={handleMouseMove}
+//           onMouseUp={handleMouseUp}
+//           onMouseLeave={handleMouseUp}
+//           onTouchStart={handleTouchStart}
+//           onTouchMove={handleTouchMove}
+//           onTouchEnd={handleTouchEnd}
+//           style={{ touchAction: 'none' }}
+//         />
+//       </div>
+
+//       {!cameraStopped && (
+//         <button onClick={capturePhoto} className='bg-blue-600 text-white px-4 py-2 rounded'>
+//           Capture Photo
+//         </button>
+//       )}
+
+//       {cameraStopped && (
+//         <div className='flex gap-3'>
+//           <div className='bg-gray-100 px-4 py-2 rounded border'>
+//             Current: <span className='font-bold capitalize'>{selectedFinger}</span> Finger
+//           </div>
+//           <button onClick={reset} className='bg-green-600 text-white px-4 py-2 rounded'>
+//             Restart Camera
+//           </button>
+//         </div>
+//       )}
+
+//       {cameraStopped && <div className='text-sm text-gray-600 text-center'>💡 Click and drag the ring to move between fingers or slide up/down</div>}
+//     </div>
+//   )
+// }
+
+// export default RingTryOn
