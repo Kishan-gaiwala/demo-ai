@@ -2645,13 +2645,37 @@ const RingTryOn = () => {
       setRingLoaded(false)
       const img = new Image()
       img.crossOrigin = 'anonymous'
+
+      // ⭐ HIGH QUALITY IMAGE SETTINGS
+      img.decoding = "sync"
+      img.loading = "eager"
+      img.fetchPriority = "high"
+
       img.onload = () => {
-        imageRef.current = img
-        setRingLoaded(true)
-        if (cameraStopped) {
-          redrawRing()
+        // ⭐ force high quality scaling
+        const highResCanvas = document.createElement("canvas")
+        const ctx = highResCanvas.getContext("2d")
+
+        // upscale to very high internal resolution
+        highResCanvas.width = img.width * 2
+        highResCanvas.height = img.height * 2
+
+        // high-quality resampling
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = "high"
+
+        ctx.drawImage(img, 0, 0, highResCanvas.width, highResCanvas.height)
+
+        const highResImg = new Image()
+        highResImg.src = highResCanvas.toDataURL("image/png")
+
+        highResImg.onload = () => {
+          imageRef.current = highResImg
+          setRingLoaded(true)
+          if (cameraStopped) redrawRing()
         }
       }
+
       img.onerror = () => {
         alert('Failed to load ring image. Please try another image.')
         setRingLoaded(true)
@@ -2746,7 +2770,7 @@ const RingTryOn = () => {
         video: {
           width: 640,
           height: 640,
-          facingMode: 'user'
+          facingMode: { ideal: "environment" }
         }
       })
 
@@ -2970,7 +2994,16 @@ const RingTryOn = () => {
     ctx.shadowOffsetX = 0
     ctx.shadowOffsetY = 4
 
-    ctx.drawImage(imageRef.current, -ringW / 2, -ringH / 2, ringW, ringH)
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = "high"
+
+    ctx.drawImage(
+      imageRef.current,
+      -ringW / 2,
+      -ringH / 2,
+      ringW,
+      ringH
+    )
     ctx.restore()
   }
 
@@ -3176,7 +3209,7 @@ const RingTryOn = () => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none', height: 500, width: "100%" }}
+          style={{ touchAction: 'none', height: "100%", width: "100%", objectFit: "contain" }}
         />
 
         {/* <canvas
