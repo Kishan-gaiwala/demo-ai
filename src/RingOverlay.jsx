@@ -2158,7 +2158,6 @@ const RingTryOn = () => {
   const [ringLoaded, setRingLoaded] = useState(false)
   const [cameraStopped, setCameraStopped] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [ringPosition, setRingPosition] = useState({
     index: 0.4,
     middle: 0.4,
@@ -2434,7 +2433,6 @@ const RingTryOn = () => {
 
     if (dist < 50) {
       setIsDragging(true)
-      setDragStart({ x: mouseX, y: mouseY })
       canvasRef.current.style.cursor = 'grabbing'
     }
   }
@@ -2481,7 +2479,6 @@ const RingTryOn = () => {
 
     if (dist < 50) {
       setIsDragging(true)
-      setDragStart({ x: touchX, y: touchY })
     }
   }
 
@@ -3190,6 +3187,6 @@ export default RingTryOn
 //       )}
 //     </div>
 //   )
-// }
+// }ringPositionringPosition
 
 // export default RingTryOn
