@@ -2164,7 +2164,7 @@ const RingTryOn = () => {
     middle: 0.4,
     ring: 0.4,
   })
-  console.log(dragStart)
+  // console.log(dragStart)
   const smoothAngle = useRef({
     index: 0,
     middle: 0,
@@ -2336,9 +2336,9 @@ const RingTryOn = () => {
     if (!ringLoaded) return
 
     const SIZE_MAP = {
-      index: 0.55,
-      middle: 0.55,
-      ring: 0.55,
+      index: 0.65,
+      middle: 0.65,
+      ring: 0.65,
     }
 
     const ringW = width * SIZE_MAP[finger]
