@@ -2168,7 +2168,7 @@ const RingTryOn = () => {
     index: 0,
     middle: 0,
     ring: 0,
-    pinky: 0
+    pinky: 0,
   })
 
   useEffect(() => {
@@ -2313,13 +2313,18 @@ const RingTryOn = () => {
     const ctx = canvasRef.current.getContext('2d')
     const { base, mid } = FINGER_MAP[finger]
 
+    // Move ring slightly down from knuckle towards base
+    const t = ringPosition[finger] ?? 0.45
+    const offset = -0.07 // PUSH DOWN toward hand slightly
+
+    const adjustedT = Math.max(0.15, Math.min(0.75, t + offset))
+
     const basePt = lm[base]
     const midPt = lm[mid]
 
-    const t = ringPosition[finger]
-
-    const x = (basePt.x + (midPt.x - basePt.x) * t) * canvasRef.current.width
-    const y = (basePt.y + (midPt.y - basePt.y) * t) * canvasRef.current.height
+    // const t = ringPosition[finger]
+    const x = (basePt.x + (midPt.x - basePt.x) * adjustedT) * canvasRef.current.width
+    const y = (basePt.y + (midPt.y - basePt.y) * adjustedT) * canvasRef.current.height
 
     const width = Math.hypot((basePt.x - midPt.x) * canvasRef.current.width, (basePt.y - midPt.y) * canvasRef.current.height)
 
@@ -2411,7 +2416,8 @@ const RingTryOn = () => {
     let t = (mouseDx * fingerDx + mouseDy * fingerDy) / (fingerLength * fingerLength)
 
     // Clamp between 0.1 (base) and 0.7 (near tip)
-    t = Math.max(-0.4, Math.min(0.8, t))
+    // t = Math.max(-0.4, Math.min(0.8, t))
+    t = Math.max(0.25, Math.min(0.65, t))
 
     setRingPosition((prev) => ({
       ...prev,
